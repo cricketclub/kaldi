@@ -617,6 +617,16 @@ void ComputationGraphBuilder::Prune() {
   computable_info_.resize(new_num_cindex_ids, (char)kComputable);
   usable_count_.resize(start_cindex_id);
   usable_count_.resize(new_num_cindex_ids, 1);
+  // depend_on_this_ is a vector of vectors-- keeping track of the reverse of
+  // the dependencies-- and I believe we won't be needing this information any
+  // more past this point.
+  depend_on_this_.resize(start_cindex_id);
+  depend_on_this_.resize(new_num_cindex_ids);
+  // computable_queued_ also shouldn't be queried past this point, but
+  // I believe they should all be false at this point anyway (note that
+  // we assert below that computable_queue_ is empty).
+  computable_queued_.resize(new_num_cindex_ids);
+
   KALDI_ASSERT(computable_queue_.empty());
   graph_->segment_ends.push_back(new_num_cindex_ids);
 }
@@ -1612,7 +1622,9 @@ int32 ComputationStepsComputer::AddStep(const std::vector<Cindex> &cindexes,
   std::vector<int32>::iterator out_iter = step.begin();
   std::pair<int32, int32> *locations = &((*locations_)[0]);
   if (!add_if_absent) {
-    // this version of GetCindexId will not add CindexIds.
+    // this version of GetCindexId will not add CindexIds, and
+    // will crash if CindexIds not present in the graph are
+    // encountered.
     for (; iter != end; ++iter, ++out_iter, ++row_index) {
       int32 cindex_id = graph_->GetCindexId(*iter);
       *out_iter = cindex_id;
@@ -1623,7 +1635,9 @@ int32 ComputationStepsComputer::AddStep(const std::vector<Cindex> &cindexes,
     for (; iter != end; ++iter, ++out_iter, ++row_index) {
       bool is_input = false;  // only relevant if we have to add the cindex to
                               // the computation graph, which we won't for
-                              // inputs (we only might for dim-range nodes).
+                              // inputs (we only might for dim-range nodes
+                              // and for the component-input and component
+                              // steps of non-simple Components.
       bool added;
       int32 cindex_id = graph_->GetCindexId(*iter, is_input, &added);
       *out_iter = cindex_id;
@@ -1783,17 +1797,24 @@ void ComputationStepsComputer::ProcessComponentStep(
       ConvertToIndexes(input_step, &input_indexes);
       ConvertToIndexes(step, &indexes);
 
+
+      size_t orig_size = indexes.size() + input_indexes.size();
+
       // the component wants to have the opportunity to change the
       // order of these indexes from their default.
       component->ReorderIndexes(&input_indexes, &indexes);
+
+      bool added_padding = (orig_size != indexes.size() + input_indexes.size());
 
       // Now convert back from indexes to cindexes (we know the
       // node-index in each case)
       std::vector<Cindex> reordered_step;
       ConvertToCindexes(indexes, component_node_index, &reordered_step);
       ConvertToCindexes(input_indexes, component_input_index, &input_step);
-      AddStep(input_step);
-      AddStep(reordered_step);
+      // the 'added_padding' argument becomes the 'add_if_absent' arg of
+      // AddStep, so it knows to expect that it might have to add new CindexIds.
+      AddStep(input_step, added_padding);
+      AddStep(reordered_step, added_padding);
     } else {
       AddStep(input_step);
       // it's more efficient to add the step with cindex_ids; and we have these
@@ -1944,8 +1965,18 @@ void ComputationStepsComputer::Check() const {
   for (int32 c = 0; c < num_cindexes; c++) {
     int32 step = (*locations_)[c].first,
         row = (*locations_)[c].second;
-    KALDI_ASSERT(step >= 0 && row >= 0 &&
-                 (*steps_)[step][row] == c);
+    if (!(step >= 0 && row >= 0 && (*steps_)[step][row] == c)) {
+      // normally the 'locations' of cindexes should be unique, so we should
+      // never normally reach this point; but it's not an error to have
+      // duplicates of the cindexes used for 'padding' by the ReorderIndexes()
+      // function of non-simple Components.  So we check whether that's the case
+      // before we die.
+      if (graph_->cindexes[c].second.t != kNoTime) {
+        // if this happens it will likely require some debugging by Dan.
+        KALDI_ERR << "Error in computing computation steps (likely code error)";
+      }
+    }
+
   }
 }
 

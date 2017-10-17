@@ -170,7 +170,7 @@ if [ $stage -le 3 ]; then
 
        # compare lattice rescoring with biglm decoding, going from tgpr to tg.
       steps/decode_biglm.sh --nj ${nspk} --cmd "$decode_cmd" \
-        exp/tri2b/graph_nosp_tgpr data/lang_test_{tgpr,tg}/G.fst \
+        exp/tri2b/graph_nosp_tgpr data/lang_nosp_test_{tgpr,tg}/G.fst \
         data/test_${data} exp/tri2b/decode_nosp_tgpr_${data}_tg_biglm
 
        # baseline via LM rescoring of lattices.
@@ -358,16 +358,12 @@ local/run_sgmm2.sh
 local/nnet/run_dnn.sh
 
 # The following demonstrate how to re-segment long audios.
-# local/run_segmentation.sh
+# local/run_segmentation_long_utts.sh
 
 # The next two commands show how to train a bottleneck network based on the nnet2 setup,
 # and build an SGMM system on top of it.
 #local/run_bnf.sh
 #local/run_bnf_sgmm.sh
-
-
-# You probably want to try KL-HMM
-#local/run_kl_hmm.sh
 
 # Getting results [see RESULTS file]
 # for x in exp/*/decode*; do [ -d $x ] && grep WER $x/wer_* | utils/best_wer.sh; done
