@@ -158,6 +158,15 @@ void Nnet::SetComponent(int32 c, Component *component) {
   components_[c] = component;
 }
 
+int32 Nnet::AddComponent(const std::string &name,
+                         Component *component) {
+  int32 ans = components_.size();
+  KALDI_ASSERT(IsValidName(name) && component != NULL);
+  components_.push_back(component);
+  component_names_.push_back(name);
+  return ans;
+}
+
 /// Returns true if this is component-input node, i.e. a node of type kDescriptor
 /// that immediately precedes a node of type kComponent.
 bool Nnet::IsComponentInputNode(int32 node) const {
@@ -717,7 +726,13 @@ void Nnet::Check(bool warn_for_orphans) const {
         KALDI_ASSERT(n > 0 && nodes_[n-1].node_type == kDescriptor);
         const NetworkNode &src_node = nodes_[n-1];
         const Component *c = GetComponent(node.u.component_index);
-        int32 src_dim = src_node.Dim(*this), input_dim = c->InputDim();
+        int32 src_dim, input_dim = c->InputDim();
+        try {
+          src_dim = src_node.Dim(*this);
+        } catch (...) {
+          KALDI_ERR << "Error in Descriptor for network-node "
+                    << node_name << " (see error above)";
+        }
         if (src_dim != input_dim) {
           KALDI_ERR << "Dimension mismatch for network-node "
                     << node_name << ": input-dim "
