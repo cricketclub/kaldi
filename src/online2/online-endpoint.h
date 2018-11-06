@@ -135,24 +135,24 @@ struct OnlineEndpointConfig {
 
   /// rule1 times out after 5 seconds of silence, even if we decoded nothing.
   OnlineEndpointRule rule1;
-  /// rule2 times out after 0.5 seconds of silence if we reached the final-state
+  /// rule2 times out after 0.4 seconds of silence if we reached the final-state
   /// with good probability (relative_cost < 2.0) after decoding something.
   OnlineEndpointRule rule2;
-  /// rule3 times out after 1.0 seconds of silence if we reached the final-state
+  /// rule3 times out after 0.5 seconds of silence if we reached the final-state
   /// with OK probability (relative_cost < 8.0) after decoding something
   OnlineEndpointRule rule3;
-  /// rule4 times out after 2.0 seconds of silence after decoding something,
+  /// rule4 times out after 0.6 seconds of silence after decoding something,
   /// even if we did not reach a final-state at all.
   OnlineEndpointRule rule4;
-  /// rule5 times out after the utterance is 20 seconds long, regardless of
+  /// rule5 times out after the utterance is 60 seconds long, regardless of
   /// anything else.
   OnlineEndpointRule rule5;
 
   OnlineEndpointConfig():
       rule1(false, 5.0, std::numeric_limits<BaseFloat>::infinity(), 0.0),
-      rule2(true, 0.5, 2.0, 0.0),
-      rule3(true, 1.0, 8.0, 0.0),
-      rule4(true, 2.0, std::numeric_limits<BaseFloat>::infinity(), 0.0),
+      rule2(true, 0.4, 2.0, 0.0),
+      rule3(true, 0.5, 8.0, 0.0),
+      rule4(true, 0.6, std::numeric_limits<BaseFloat>::infinity(), 0.0),
       rule5(false, 0.0, std::numeric_limits<BaseFloat>::infinity(), 20.0) { }
 
   void Register(OptionsItf *opts) {
