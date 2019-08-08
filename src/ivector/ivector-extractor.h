@@ -126,6 +126,9 @@ struct IvectorExtractorOptions {
 // as we add frames.
 class OnlineIvectorEstimationStats;
 
+// Forward declaration
+class OnlineCudaIvectorExtractionInfo;
+
 // Caution: the IvectorExtractor is not the only thing required to get an
 // ivector.  We also need to get posteriors from a GMM, typically a FullGmm.
 // Typically these will be obtained in a process that involves using a DiagGmm
@@ -137,6 +140,7 @@ class IvectorExtractor {
  public:
   friend class IvectorExtractorStats;
   friend class OnlineIvectorEstimationStats;
+  friend class OnlineCudaIvectorExtractionInfo;
 
   IvectorExtractor(): prior_offset_(0.0) { }
 
