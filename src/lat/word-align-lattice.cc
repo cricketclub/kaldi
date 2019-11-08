@@ -575,7 +575,7 @@ void LatticeWordAligner::ComputationState::OutputArcForce(
     int32 word = word_labels_[0];
     if (! *error && !IsPlausibleWord(info, tmodel, transition_ids_)) {
       *error = true;
-      KALDI_WARN << "Invalid word at end of lattice [partial lattice, forced out?]";
+      KALDI_VLOG(2) << "Invalid word at end of lattice [partial lattice, forced out?]";
     }
     CompactLatticeWeight cw(weight_, transition_ids_);
     *arc_out = CompactLatticeArc(word, word, cw, fst::kNoStateId);
@@ -632,7 +632,7 @@ void LatticeWordAligner::ComputationState::OutputArcForce(
       // forced out.
       if (! *error) {
         *error = true;
-        KALDI_WARN << "Partial word detected at end of utterance";
+        KALDI_VLOG(2) << "Partial word detected at end of utterance";
       }
       CompactLatticeWeight cw(weight_, transition_ids_);
       *arc_out = CompactLatticeArc(info.partial_word_label, info.partial_word_label,
