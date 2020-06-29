@@ -178,7 +178,8 @@ class BatchedThreadedNnet3CudaOnlinePipeline {
                    const std::vector<SubVector<BaseFloat>> &wave_samples,
                    const std::vector<bool> &is_first_chunk,
                    const std::vector<bool> &is_last_chunk,
-                   std::vector<std::string *> *partial_hypotheses = NULL);
+                   std::vector<std::string *> *partial_hypotheses = NULL,
+                   std::vector<bool> *end_point = NULL);
 
   // Version providing directly the features. Only runs nnet3 & decoder
   // Used when we want to provide the final ivectors (offline case)
