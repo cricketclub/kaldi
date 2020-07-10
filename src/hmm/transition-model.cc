@@ -273,11 +273,13 @@ int32 TransitionModel::NumTransitionIndices(int32 trans_state) const {
 }
 
 int32 TransitionModel::TransitionIdToTransitionState(int32 trans_id) const {
+  trans_id = std::min((int)id2state_.size() - 1, trans_id);
   KALDI_ASSERT(trans_id != 0 &&  static_cast<size_t>(trans_id) < id2state_.size());
   return id2state_[trans_id];
 }
 
 int32 TransitionModel::TransitionIdToTransitionIndex(int32 trans_id) const {
+  trans_id = std::min((int)id2state_.size() - 1, trans_id);
   KALDI_ASSERT(trans_id != 0 && static_cast<size_t>(trans_id) < id2state_.size());
   return trans_id - state2id_[id2state_[trans_id]];
 }
@@ -340,6 +342,7 @@ int32 TransitionModel::NumPhones() const {
 
 
 bool TransitionModel::IsFinal(int32 trans_id) const {
+  trans_id = std::min((int)id2state_.size() - 1, trans_id);
   KALDI_ASSERT(static_cast<size_t>(trans_id) < id2state_.size());
   int32 trans_state = id2state_[trans_id];
   int32 trans_index = trans_id - state2id_[trans_state];
@@ -783,12 +786,14 @@ void TransitionModel::MapUpdateShared(const Vector<double> &stats,
 
 
 int32 TransitionModel::TransitionIdToPhone(int32 trans_id) const {
+  trans_id = std::min((int)id2state_.size() - 1, trans_id);
   KALDI_ASSERT(trans_id != 0 && static_cast<size_t>(trans_id) < id2state_.size());
   int32 trans_state = id2state_[trans_id];
   return tuples_[trans_state-1].phone;
 }
 
 int32 TransitionModel::TransitionIdToPdfClass(int32 trans_id) const {
+  trans_id = std::min((int)id2state_.size() - 1, trans_id);
   KALDI_ASSERT(trans_id != 0 && static_cast<size_t>(trans_id) < id2state_.size());
   int32 trans_state = id2state_[trans_id];
 
@@ -803,7 +808,7 @@ int32 TransitionModel::TransitionIdToPdfClass(int32 trans_id) const {
 
 
 int32 TransitionModel::TransitionIdToHmmState(int32 trans_id) const {
-  KALDI_ASSERT(trans_id != 0 && static_cast<size_t>(trans_id) < id2state_.size());
+  trans_id = std::min((int)id2state_.size() - 1, trans_id);
   int32 trans_state = id2state_[trans_id];
   const Tuple &t = tuples_[trans_state-1];
   return t.hmm_state;
@@ -910,7 +915,9 @@ bool TransitionModel::Compatible(const TransitionModel &other) const {
 }
 
 bool TransitionModel::IsSelfLoop(int32 trans_id) const {
+  trans_id = std::min((int)id2state_.size() - 1, trans_id);
   KALDI_ASSERT(static_cast<size_t>(trans_id) < id2state_.size());
+
   int32 trans_state = id2state_[trans_id];
   int32 trans_index = trans_id - state2id_[trans_state];
   const Tuple &tuple = tuples_[trans_state-1];

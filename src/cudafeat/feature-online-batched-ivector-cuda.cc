@@ -20,19 +20,21 @@
 
 namespace kaldi {
 BatchedIvectorExtractorCuda::BatchedIvectorExtractorCuda(
-    const OnlineIvectorExtractionConfig &config, int32_t chunk_size,
+    OnlineIvectorExtractionInfo &info, int32_t chunk_size,
     int32_t num_lanes, int32_t num_channels)
-    : cmvn_(NULL),
+    : 
+      info_(info),
+      cmvn_(NULL),
       chunk_size_(chunk_size),
       max_lanes_(num_lanes),
-      num_channels_(num_channels) {
+      num_channels_(num_channels)
+       {
 #if CUDA_VERSION < 9010
   // some components require newer cuda versions.  If you see this error
   // upgrade to a more recent CUDA version.
   KALDI_ERR << "BatchedIvectorExtractorCuda requires CUDA 9.1 or newer.";
 #endif
-  info_.Init(config);
-  Read(config);
+  Read(info);
 
   naive_cmvn_state_ = OnlineCmvnState(info_.global_cmvn_stats);
   // TODO parameterize coarsening factor?
@@ -98,10 +100,14 @@ BatchedIvectorExtractorCuda::~BatchedIvectorExtractorCuda() {
 }
 
 void BatchedIvectorExtractorCuda::Read(
-    const kaldi::OnlineIvectorExtractionConfig &config) {
-  // read ubm
-  DiagGmm gmm;
-  ReadKaldiObject(config.diag_ubm_rxfilename, &gmm);
+    kaldi::OnlineIvectorExtractionInfo &info) {
+  // // compute derived variables
+  const std::vector<Matrix<double> > &M = info.extractor.M_;
+  const std::vector<SpMatrix<double> > &Sigma_inv = info.extractor.Sigma_inv_;
+  ivector_dim_ = info.extractor.IvectorDim();
+  feat_dim_ = info.extractor.FeatDim();
+
+  const DiagGmm &gmm = info.diag_ubm;
   ubm_gconsts_.Resize(gmm.NumGauss());
   ubm_gconsts_.CopyFromVec(gmm.gconsts());
   ubm_means_inv_vars_.Resize(gmm.NumGauss(), gmm.Dim());
@@ -110,54 +116,25 @@ void BatchedIvectorExtractorCuda::Read(
   ubm_inv_vars_.CopyFromMat(gmm.inv_vars());
   num_gauss_ = gmm.NumGauss();
 
-  // read extractor (copied from ivector/ivector-extractor.cc)
-  bool binary;
-  Input input(config.ivector_extractor_rxfilename, &binary);
-  Matrix<float> w;
-  Vector<float> w_vec;
-  std::vector<Matrix<float> > ie_M;
-  std::vector<SpMatrix<float> > ie_Sigma_inv;
+  prior_offset_ = info.extractor.prior_offset_;
 
-  ExpectToken(input.Stream(), binary, "<IvectorExtractor>");
-  ExpectToken(input.Stream(), binary, "<w>");
-  w.Read(input.Stream(), binary);
-  ExpectToken(input.Stream(), binary, "<w_vec>");
-  w_vec.Read(input.Stream(), binary);
-  ExpectToken(input.Stream(), binary, "<M>");
-  int32 size;
-  ReadBasicType(input.Stream(), binary, &size);
-  KALDI_ASSERT(size > 0);
-  ie_M.resize(size);
-  for (int32 i = 0; i < size; i++) {
-    ie_M[i].Read(input.Stream(), binary);
-  }
-  ExpectToken(input.Stream(), binary, "<SigmaInv>");
-  ie_Sigma_inv.resize(size);
-  for (int32 i = 0; i < size; i++) {
-    ie_Sigma_inv[i].Read(input.Stream(), binary);
-  }
-  ExpectToken(input.Stream(), binary, "<IvectorOffset>");
-  ReadBasicType(input.Stream(), binary, &prior_offset_);
-  ExpectToken(input.Stream(), binary, "</IvectorExtractor>");
-
-  // compute derived variables
-  ivector_dim_ = ie_M[0].NumCols();
-  feat_dim_ = ie_M[0].NumRows();
-
-  ie_Sigma_inv_M_f_.Resize(num_gauss_ * feat_dim_, ivector_dim_, kUndefined);
+  ie_Sigma_inv_M_f_.Resize(num_gauss_ * feat_dim_, ivector_dim_);
 
   ie_U_.Resize(num_gauss_, ivector_dim_ * (ivector_dim_ + 1) / 2);
 
   SpMatrix<float> tmp_sub_U(ivector_dim_);
   Matrix<float> tmp_Sigma_inv_M(feat_dim_, ivector_dim_);
   for (int32 i = 0; i < num_gauss_; i++) {
+    // Cast to floats
+    Matrix<float> M_i(M[i]);
+    SpMatrix<float> Sigma_inv_i(Sigma_inv[i]);
     // compute matrix ie_Sigma_inv_M[i]
-    tmp_sub_U.AddMat2Sp(1, ie_M[i], kTrans, ie_Sigma_inv[i], 0);
+    tmp_sub_U.AddMat2Sp(1, M_i, kTrans, Sigma_inv_i, 0);
     SubVector<float> tmp_U_vec(tmp_sub_U.Data(),
                                ivector_dim_ * (ivector_dim_ + 1) / 2);
     ie_U_.Row(i).CopyFromVec(tmp_U_vec);
 
-    tmp_Sigma_inv_M.AddSpMat(1, ie_Sigma_inv[i], ie_M[i], kNoTrans, 0);
+    tmp_Sigma_inv_M.AddSpMat(1, Sigma_inv_i, M_i, kNoTrans, 0);
 
     // copy into global matrix
     CuSubMatrix<float> window(ie_Sigma_inv_M_f_, i * feat_dim_, feat_dim_, 0,

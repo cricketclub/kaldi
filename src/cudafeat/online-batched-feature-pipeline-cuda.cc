@@ -25,9 +25,9 @@
 namespace kaldi {
 
 OnlineBatchedFeaturePipelineCuda::OnlineBatchedFeaturePipelineCuda(
-    const OnlineNnet2FeaturePipelineConfig &config,
+    OnlineNnet2FeaturePipelineInfo &info,
     int32_t max_chunk_size_samples, int32_t max_lanes, int32_t num_channels)
-    : info_(config),
+    : info_(info),
       cmvn_(NULL),
       max_chunk_size_samples_(max_chunk_size_samples),
       max_lanes_(max_lanes),
@@ -82,16 +82,16 @@ OnlineBatchedFeaturePipelineCuda::OnlineBatchedFeaturePipelineCuda(
                                   max_chunk_size_frames_, num_channels_, 1);
   }
 
-  if (info_.use_ivectors) {
-    OnlineIvectorExtractionConfig ivector_extraction_opts;
-    ReadConfigFromFile(config.ivector_extraction_config,
-                       &ivector_extraction_opts);
-    info_.ivector_extractor_info.Init(ivector_extraction_opts);
+  //if (info_.use_ivectors) {
+    //OnlineIvectorExtractionConfig ivector_extraction_opts;
+    //ReadConfigFromFile(config.ivector_extraction_config,
+                       //&ivector_extraction_opts);
+    //info_.ivector_extractor_info.Init(ivector_extraction_opts);
 
-    ivector_ = new BatchedIvectorExtractorCuda(ivector_extraction_opts,
-                                               max_chunk_size_frames_,
-                                               max_lanes_, num_channels_);
-  }
+  ivector_ = new BatchedIvectorExtractorCuda(info_.ivector_extractor_info,
+                                             max_chunk_size_frames_,
+                                             max_lanes_, num_channels_);
+  //}
 
   current_samples_stash_ = new int32_t[num_channels_];
 

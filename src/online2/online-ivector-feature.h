@@ -62,6 +62,7 @@ struct OnlineIvectorExtractionConfig {
                                // feature pipeline
   std::string diag_ubm_rxfilename;  // reads type DiagGmm.
   std::string ivector_extractor_rxfilename;  // reads type IvectorExtractor
+  std::string ivector_allinone_rxfilename;  // reads type IvectorExtractor
 
   // the following four configuration values should in principle match those
   // given to the script extract_ivectors_online.sh, although none of them are
@@ -193,6 +194,7 @@ struct OnlineIvectorExtractionInfo {
   OnlineIvectorExtractionInfo(const OnlineIvectorExtractionConfig &config);
 
   void Init(const OnlineIvectorExtractionConfig &config);
+  void InitWithGSBIN(const OnlineIvectorExtractionConfig &config);
 
   int32 ExpectedFeatureDim() const;
 

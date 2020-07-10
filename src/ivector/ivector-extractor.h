@@ -246,6 +246,20 @@ class IvectorExtractor {
   void Write(std::ostream &os, bool binary) const;
   void Read(std::istream &is, bool binary);
 
+  /// Ivector-subspace projection matrices, dimension is [I][D][S].
+  /// The I'th matrix projects from ivector-space to Gaussian mean.
+  /// There is no mean offset to add-- we deal with it by having
+  /// a prior with a nonzero mean.
+  std::vector<Matrix<double> > M_;
+
+  /// Inverse variances of speaker-adapted model, dimension [I][D][D].
+  std::vector<SpMatrix<double> > Sigma_inv_;
+
+  /// 1st dim of the prior over the ivector has an offset, so it is not zero.
+  /// This is used to handle the global offset of the speaker-adapted means in a
+  /// simple way.
+  double prior_offset_;
+
   // Note: we allow the default assignment and copy operators
   // because they do what we want.
  protected:
@@ -268,20 +282,6 @@ class IvectorExtractor {
   /// as a way of making sure the log-probs are comparable between systems with
   /// and without weight projection matrices.
   Vector<double> w_vec_;
-
-  /// Ivector-subspace projection matrices, dimension is [I][D][S].
-  /// The I'th matrix projects from ivector-space to Gaussian mean.
-  /// There is no mean offset to add-- we deal with it by having
-  /// a prior with a nonzero mean.
-  std::vector<Matrix<double> > M_;
-
-  /// Inverse variances of speaker-adapted model, dimension [I][D][D].
-  std::vector<SpMatrix<double> > Sigma_inv_;
-
-  /// 1st dim of the prior over the ivector has an offset, so it is not zero.
-  /// This is used to handle the global offset of the speaker-adapted means in a
-  /// simple way.
-  double prior_offset_;
 
   // Below are *derived variables* that can be computed from the
   // variables above.

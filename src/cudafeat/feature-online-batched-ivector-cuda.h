@@ -29,7 +29,7 @@ namespace kaldi {
 
 class BatchedIvectorExtractorCuda {
  public:
-  BatchedIvectorExtractorCuda(const OnlineIvectorExtractionConfig &config,
+  BatchedIvectorExtractorCuda(OnlineIvectorExtractionInfo &info,
                               int32_t chunk_size, int32_t num_lanes,
                               int32_t num_channels);
   ~BatchedIvectorExtractorCuda();
@@ -62,12 +62,12 @@ class BatchedIvectorExtractorCuda {
   int32 NumGauss() const { return num_gauss_; }
 
  private:
-  OnlineIvectorExtractionInfo info_;
+  OnlineIvectorExtractionInfo &info_;
 
   BatchedIvectorExtractorCuda(BatchedIvectorExtractorCuda const &);
   BatchedIvectorExtractorCuda &operator=(BatchedIvectorExtractorCuda const &);
 
-  void Read(const kaldi::OnlineIvectorExtractionConfig &config);
+  void Read(kaldi::OnlineIvectorExtractionInfo &info);
 
   void InitializeChannels(const LaneDesc *lanes, int32_t num_lanes);
 

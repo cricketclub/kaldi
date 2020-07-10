@@ -70,7 +70,7 @@ void BatchedThreadedNnet3CudaOnlinePipeline::AllocateAndInitializeData(
   // Feature extraction
   if (config_.use_gpu_feature_extraction) {
     gpu_feature_pipeline_.reset(new OnlineBatchedFeaturePipelineCuda(
-        config_.feature_opts, samples_per_chunk_, config_.max_batch_size,
+        *feature_info_, samples_per_chunk_, config_.max_batch_size,
         config_.num_channels));
   } else {
     feature_pipelines_.resize(config_.num_channels);

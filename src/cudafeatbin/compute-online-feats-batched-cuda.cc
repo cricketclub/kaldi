@@ -181,8 +181,9 @@ int main(int argc, char *argv[]) {
     int32_t not_done_idx = 0;
     int32_t num_done = 0, tot_t = 0;
 
+    OnlineNnet2FeaturePipelineInfo feature_info(feature_opts);
     OnlineBatchedFeaturePipelineCuda feature_pipeline(
-        feature_opts, max_chunk_length_samples, num_lanes, num_channels);
+        feature_info, max_chunk_length_samples, num_lanes, num_channels);
 
     feat_dim = feature_pipeline.FeatureDim();
     ivector_dim = feature_pipeline.IvectorDim();

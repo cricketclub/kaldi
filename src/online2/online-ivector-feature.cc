@@ -67,6 +67,35 @@ void OnlineIvectorExtractionInfo::Init(
   this->Check();
 }
 
+void OnlineIvectorExtractionInfo::InitWithGSBIN(
+    const OnlineIvectorExtractionConfig &config) {
+  ivector_period = config.ivector_period;
+  num_gselect = config.num_gselect;
+  min_post = config.min_post;
+  posterior_scale = config.posterior_scale;
+  max_count = config.max_count;
+  num_cg_iters = config.num_cg_iters;
+  use_most_recent_ivector = config.use_most_recent_ivector;
+  greedy_ivector_extractor = config.greedy_ivector_extractor;
+  if (greedy_ivector_extractor && !use_most_recent_ivector) {
+    KALDI_WARN << "--greedy-ivector-extractor=true implies "
+               << "--use-most-recent-ivector=true";
+    use_most_recent_ivector = true;
+  }
+  max_remembered_frames = config.max_remembered_frames;
+  if (config.ivector_allinone_rxfilename =="")
+    KALDI_ERR << "ivector All-in-one model must be set ";
+  bool binary;
+  Input ki(config.ivector_allinone_rxfilename,&binary);
+  lda_mat.Read(ki.Stream(),binary);
+  global_cmvn_stats.Read(ki.Stream(),binary);
+  diag_ubm.Read(ki.Stream(),binary);
+  extractor.Read(ki.Stream(),binary);
+  splice_opts.left_context=3;
+  splice_opts.right_context=3;
+  this->Check();
+}
+
 int32 OnlineIvectorExtractionInfo::ExpectedFeatureDim() const {
   int32 num_splice = 1 + splice_opts.left_context + splice_opts.right_context,
       full_dim = lda_mat.NumCols();
