@@ -60,10 +60,10 @@ class MatrixBase {
   friend class SparseMatrix<float>;
   friend class SparseMatrix<double>;
 
-  /// Returns number of rows (or zero for emtpy matrix).
+  /// Returns number of rows (or zero for empty matrix).
   inline MatrixIndexT  NumRows() const { return num_rows_; }
 
-  /// Returns number of columns (or zero for emtpy matrix).
+  /// Returns number of columns (or zero for empty matrix).
   inline MatrixIndexT NumCols() const { return num_cols_; }
 
   /// Stride (distance in memory between each row).  Will be >= NumCols.
@@ -340,40 +340,40 @@ class MatrixBase {
 
   inline void ApplyPow(Real power) {
     this -> Pow(*this, power);
-  };
+  }
 
-  
+
   inline void ApplyPowAbs(Real power, bool include_sign=false) {
     this -> PowAbs(*this, power, include_sign);
-  };
-  
+  }
+
   inline void ApplyHeaviside() {
     this -> Heaviside(*this);
-  };
-  
+  }
+
   inline void ApplyFloor(Real floor_val) {
     this -> Floor(*this, floor_val);
-  };
-  
+  }
+
   inline void ApplyCeiling(Real ceiling_val) {
     this -> Ceiling(*this, ceiling_val);
-  };
-  
+  }
+
   inline void ApplyExp() {
     this -> Exp(*this);
-  };
+  }
 
   inline void ApplyExpSpecial() {
     this -> ExpSpecial(*this);
-  };
+  }
 
   inline void ApplyExpLimited(Real lower_limit, Real upper_limit) {
     this -> ExpLimited(*this, lower_limit, upper_limit);
-  };
-  
+  }
+
   inline void ApplyLog() {
     this -> Log(*this);
-  };
+  }
 
   /// Eigenvalue Decomposition of a square NxN matrix into the form (*this) = P D
   /// P^{-1}.  Be careful: the relationship of D to the eigenvalues we output is
@@ -504,7 +504,7 @@ class MatrixBase {
   void PowAbs(const MatrixBase<Real> &src, Real power, bool include_sign=false);
 
   void Floor(const MatrixBase<Real> &src, Real floor_val);
-  
+
   void Ceiling(const MatrixBase<Real> &src, Real ceiling_val);
 
   /// For each element x of the matrix, set it to
@@ -517,7 +517,7 @@ class MatrixBase {
   /// Ceiling(src, upper_limit);
   /// Exp(src)
   void ExpLimited(const MatrixBase<Real> &src, Real lower_limit, Real upper_limit);
-  
+
   /// Set each element to y = log(1 + exp(x))
   void SoftHinge(const MatrixBase<Real> &src);
 
@@ -574,6 +574,11 @@ class MatrixBase {
   void SymPosSemiDefEig(VectorBase<Real> *s, MatrixBase<Real> *P,
                         Real check_thresh = 0.001);
 
+  // There are some weird issue with template friend function in a class
+  // template in Windows version of nvcc. This is simple an ugly walkaround.
+#if defined(__NVCC__) && defined(_MSC_VER)
+  template<typename Real>
+#endif
   friend Real kaldi::TraceMatMat<Real>(const MatrixBase<Real> &A,
       const MatrixBase<Real> &B, MatrixTransposeType trans);  // tr (A B)
 
@@ -802,7 +807,7 @@ class MatrixBase {
   /// data memory area
   Real*   data_;
 
-  /// these atributes store the real matrix size as it is stored in memory
+  /// these attributes store the real matrix size as it is stored in memory
   /// including memalignment
   MatrixIndexT    num_cols_;   /// < Number of columns
   MatrixIndexT    num_rows_;   /// < Number of rows

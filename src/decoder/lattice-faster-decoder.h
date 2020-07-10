@@ -43,11 +43,13 @@ struct LatticeFasterDecoderConfig {
   int32 prune_interval;
   bool determinize_lattice; // not inspected by this class... used in
                             // command-line program.
-  BaseFloat beam_delta; // has nothing to do with beam_ratio
+  BaseFloat beam_delta;
   BaseFloat hash_ratio;
-  BaseFloat prune_scale;   // Note: we don't make this configurable on the command line,
-                           // it's not a very important parameter.  It affects the
-                           // algorithm that prunes the tokens as we go.
+  // Note: we don't make prune_scale configurable on the command line, it's not
+  // a very important parameter.  It affects the algorithm that prunes the
+  // tokens as we go.
+  BaseFloat prune_scale;
+
   // Most of the options inside det_opts are not actually queried by the
   // LatticeFasterDecoder class itself, but by the code that calls it, for
   // example in the function DecodeUtteranceLatticeFaster.
@@ -216,7 +218,7 @@ struct BackpointerToken {
    will normally be StdToken, but also may be BackpointerToken which is to support
    quick lookup of the current best path (see lattice-faster-online-decoder.h)
 
-   The FST you invoke this decoder with is expected to equal
+   The FST you invoke this decoder which is expected to equal
    Fst::Fst<fst::StdArc>, a.k.a. StdFst, or GrammarFst.  If you invoke it with
    FST == StdFst and it notices that the actual FST type is
    fst::VectorFst<fst::StdArc> or fst::ConstFst<fst::StdArc>, the decoder object
@@ -316,15 +318,10 @@ class LatticeFasterDecoderTpl {
   /// This function may be optionally called after AdvanceDecoding(), when you
   /// do not plan to decode any further.  It does an extra pruning step that
   /// will help to prune the lattices output by GetLattice and (particularly)
-  /// GetRawLattice more accurately, particularly toward the end of the
-  /// utterance.  It does this by using the final-probs in pruning (if any
-  /// final-state survived); it also does a final pruning step that visits all
-  /// states (the pruning that is done during decoding may fail to prune states
-  /// that are within kPruningScale = 0.1 outside of the beam).  If you call
-  /// this, you cannot call AdvanceDecoding again (it will fail), and you
-  /// cannot call GetLattice() and related functions with use_final_probs =
-  /// false.
-  /// Used to be called PruneActiveTokensFinal().
+  /// GetRawLattice more completely, particularly toward the end of the
+  /// utterance.  If you call this, you cannot call AdvanceDecoding again (it
+  /// will fail), and you cannot call GetLattice() and related functions with
+  /// use_final_probs = false.  Used to be called PruneActiveTokensFinal().
   void FinalizeDecoding();
 
   /// FinalRelativeCost() serves the same purpose as ReachedFinal(), but gives
@@ -495,7 +492,7 @@ class LatticeFasterDecoderTpl {
   BaseFloat final_relative_cost_;
   BaseFloat final_best_cost_;
 
-  // There are various cleanup tasks... the the toks_ structure contains
+  // There are various cleanup tasks... the toks_ structure contains
   // singly linked lists of Token pointers, where Elem is the list type.
   // It also indexes them in a hash, indexed by state (this hash is only
   // maintained for the most recent frame).  toks_.Clear()

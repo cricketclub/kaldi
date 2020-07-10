@@ -46,6 +46,7 @@ int32 IvectorExtractor::NumGauss() const {
 // precision) before inverting.  This avoids certain numerical problems that can
 // otherwise occur.
 // static
+//
 void IvectorExtractor::InvertWithFlooring(const SpMatrix<double> &inverse_var,
                                           SpMatrix<double> *var) {
   SpMatrix<double> dbl_var(inverse_var);

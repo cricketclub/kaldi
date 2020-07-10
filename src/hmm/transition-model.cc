@@ -39,7 +39,7 @@ void TransitionModel::ComputeTuplesIsHmm(const ContextDependencyInterface &ctx_d
   const std::vector<int32> &phones = topo_.GetPhones();
   KALDI_ASSERT(!phones.empty());
 
-  // this is the case for normal models. but not fot chain models
+  // this is the case for normal models. but not for chain models
   std::vector<std::vector<std::pair<int32, int32> > > pdf_info;
   std::vector<int32> num_pdf_classes( 1 + *std::max_element(phones.begin(), phones.end()), -1);
   for (size_t i = 0; i < phones.size(); i++)
@@ -85,7 +85,7 @@ void TransitionModel::ComputeTuplesNotHmm(const ContextDependencyInterface &ctx_
 
   // pdf_info is a set of lists indexed by phone. Each list is indexed by
   // (pdf-class, self-loop pdf-class) of each state of that phone, and the element
-  // is a list of possible (pdf, self-loop pdf) pairs that that (pdf-class, self-loop pdf-class)
+  // is a list of possible (pdf, self-loop pdf) pairs that (pdf-class, self-loop pdf-class)
   // pair generates.
   std::vector<std::vector<std::vector<std::pair<int32, int32> > > > pdf_info;
   // pdf_class_pairs is a set of lists indexed by phone. Each list stores
@@ -177,7 +177,7 @@ void TransitionModel::ComputeDerived() {
   }
 
   // The following statements put copies a large number in the region of memory
-  // past the end of the id2pdf_id_ array, while leaving the aray as it was
+  // past the end of the id2pdf_id_ array, while leaving the array as it was
   // before.  The goal of this is to speed up decoding by disabling a check
   // inside TransitionIdToPdf() that the transition-id was within the correct
   // range.
@@ -273,11 +273,13 @@ int32 TransitionModel::NumTransitionIndices(int32 trans_state) const {
 }
 
 int32 TransitionModel::TransitionIdToTransitionState(int32 trans_id) const {
+  trans_id = std::min((int)id2state_.size() - 1, trans_id);
   KALDI_ASSERT(trans_id != 0 &&  static_cast<size_t>(trans_id) < id2state_.size());
   return id2state_[trans_id];
 }
 
 int32 TransitionModel::TransitionIdToTransitionIndex(int32 trans_id) const {
+  trans_id = std::min((int)id2state_.size() - 1, trans_id);
   KALDI_ASSERT(trans_id != 0 && static_cast<size_t>(trans_id) < id2state_.size());
   return trans_id - state2id_[id2state_[trans_id]];
 }
@@ -340,6 +342,7 @@ int32 TransitionModel::NumPhones() const {
 
 
 bool TransitionModel::IsFinal(int32 trans_id) const {
+  trans_id = std::min((int)id2state_.size() - 1, trans_id);
   KALDI_ASSERT(static_cast<size_t>(trans_id) < id2state_.size());
   int32 trans_state = id2state_[trans_id];
   int32 trans_index = trans_id - state2id_[trans_state];
@@ -783,12 +786,14 @@ void TransitionModel::MapUpdateShared(const Vector<double> &stats,
 
 
 int32 TransitionModel::TransitionIdToPhone(int32 trans_id) const {
+  trans_id = std::min((int)id2state_.size() - 1, trans_id);
   KALDI_ASSERT(trans_id != 0 && static_cast<size_t>(trans_id) < id2state_.size());
   int32 trans_state = id2state_[trans_id];
   return tuples_[trans_state-1].phone;
 }
 
 int32 TransitionModel::TransitionIdToPdfClass(int32 trans_id) const {
+  trans_id = std::min((int)id2state_.size() - 1, trans_id);
   KALDI_ASSERT(trans_id != 0 && static_cast<size_t>(trans_id) < id2state_.size());
   int32 trans_state = id2state_[trans_id];
 
@@ -803,7 +808,7 @@ int32 TransitionModel::TransitionIdToPdfClass(int32 trans_id) const {
 
 
 int32 TransitionModel::TransitionIdToHmmState(int32 trans_id) const {
-  KALDI_ASSERT(trans_id != 0 && static_cast<size_t>(trans_id) < id2state_.size());
+  trans_id = std::min((int)id2state_.size() - 1, trans_id);
   int32 trans_state = id2state_[trans_id];
   const Tuple &t = tuples_[trans_state-1];
   return t.hmm_state;
@@ -910,7 +915,9 @@ bool TransitionModel::Compatible(const TransitionModel &other) const {
 }
 
 bool TransitionModel::IsSelfLoop(int32 trans_id) const {
+  trans_id = std::min((int)id2state_.size() - 1, trans_id);
   KALDI_ASSERT(static_cast<size_t>(trans_id) < id2state_.size());
+
   int32 trans_state = id2state_[trans_id];
   int32 trans_index = trans_id - state2id_[trans_state];
   const Tuple &tuple = tuples_[trans_state-1];

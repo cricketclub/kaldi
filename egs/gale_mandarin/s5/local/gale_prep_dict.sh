@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # prepare dictionary for HKUST
 # it is done for English and Chinese separately,
 # For English, we use CMU dictionary, and Sequitur G2P
@@ -41,7 +41,7 @@ cat $dict_dir/vocab-full.txt | grep -v '[a-zA-Z]' | \
 if [ ! -f $dict_dir/cmudict/cmudict.0.7a ]; then
   echo "--- Downloading CMU dictionary ..."
   svn co http://svn.code.sf.net/p/cmusphinx/code/trunk/cmudict/  $dict_dir/cmudict || \
-  wget -e robots=off  -r -np -nH --cut-dirs=4 -R index.html http://svn.code.sf.net/p/cmusphinx/code/trunk/cmudict/ -P $dict_dir  || exit 1
+  wget -c -e robots=off  -r -np -nH --cut-dirs=4 -R index.html http://svn.code.sf.net/p/cmusphinx/code/trunk/cmudict/ -P $dict_dir  || exit 1
 fi
 
 if [ ! -f $dict_dir/cmudict/scripts/make_baseform.pl ] ; then
@@ -131,6 +131,8 @@ unset LC_ALL
 cat $dict_dir/ch-dict.txt |\
   perl -e '
   use utf8;
+  binmode(STDIN,":encoding(utf8)");
+  binmode(STDOUT,":encoding(utf8)");
   while (<STDIN>) {
     @A = split(" ", $_);
     $word_len = length($A[0]);
